@@ -1,0 +1,88 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: canary
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: canary
+  template:
+    metadata:
+      labels:
+        app: canary
+    spec:
+      containers:
+      - name: canary
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: canary2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: canary2
+  template:
+    metadata:
+      labels:
+        app: canary2
+    spec:
+      containers:
+      - name: canary2
+        image: gcr.io/google-samples/hello-app:2.0
+        ports:
+        - containerPort: 8080
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: canary
+spec:
+  selector:
+    app: canary
+  ports:
+    - protocol: TCP
+      port: 8080
+      name: web
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: canary2
+spec:
+  selector:
+    app: canary2
+  ports:
+    - protocol: TCP
+      port: 8080
+      name: web
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1beta1
+metadata:
+  name: canary
+  annotations:
+    traefik.ingress.kubernetes.io/service-weights: |
+      canary: 75%
+      canary2: 25%
+spec:
+  rules:
+  - host: canary
+    http:
+      paths:
+      - backend:
+          serviceName: canary
+          servicePort: 8080
+      - backend:
+          serviceName: canary2
+          servicePort: 8080

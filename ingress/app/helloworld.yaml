@@ -1,0 +1,47 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: helloworld
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: helloworld
+  template:
+    metadata:
+      labels:
+        app: helloworld
+    spec:
+      containers:
+      - name: helloworld
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: helloworld
+spec:
+  selector:
+    app: helloworld
+  ports:
+    - protocol: TCP
+      port: 8080
+      name: web
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1beta1
+metadata:
+  name: helloworld
+spec:
+  rules:
+  - host: helloworld
+    http:
+      paths:
+      - backend:
+          serviceName: helloworld
+          servicePort: 8080
